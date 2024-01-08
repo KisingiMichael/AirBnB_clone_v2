@@ -1,30 +1,32 @@
 #!/usr/bin/python3
 """ State Module for HBNB project """
-import models
-from models.base_model import BaseModel, Base
-from models.city import City
-from os import getenv
-from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
+from sqlalchemy import Column, String, Integer
+from models.base_model import BaseModel
+from sqlalchemy.ext.declarative import declarative_base
+from os import getenv
+import models
+from models.city import City
+import shlex
 
-storage_type = getenv("HBNB_TYPE_STORAGE")
+
+from models.base_model import Base
 
 
 class State(BaseModel, Base):
     """ State class """
-
-    __tablename__ = 'states'
-
+    __tablename__ = "states"
     name = Column(String(128), nullable=False)
-    cities = relationship('City', cascade="all,delete, delete-orphan", backref="state")
+    
+    if getenv("HBNB_TYPE_STORAGE") == "db":
+        cities = relationship("City", cascade='all, delete, delete-orphan',
+                              back_populates="state")
 
-    # Check if storage engine is not DBStorage
-    if getenv("HBNB_TYPE_STORAGE") != "db":
+    else:
         @property
         def cities(self):
-            """Get a list of all related City objects."""
             city_list = []
-            for city in list(models.storage.all(City).values()):
+            for city in models.storage.all(City).values():
                 if city.state_id == self.id:
                     city_list.append(city)
             return city_list
